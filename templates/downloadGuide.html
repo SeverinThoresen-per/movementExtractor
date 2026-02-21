@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+  </head>
+  <body>
+    <header class="topbar">
+      <div class="brand">Email Inspector</div>
+      <div class="top-actions">
+        <a class="top-btn" href="Index.html">Back to uploader</a>
+      </div>
+    </header>
+
+    <main style="padding:24px;max-width:900px;margin:18px auto;">
+      <div class="upload-box">
+        <h1>Gmail</h1>
+        <img class="responsive" src="{{ url_for('static', filename='pictures/gmail.png') }}" alt="Gmail export steps">
+        <h3>Open the email, click on the three dots in the top right, and click "Download message" or "Download email" depending on the client.</h3>
+      </div>
+    </main>
+  </body>
+</html>

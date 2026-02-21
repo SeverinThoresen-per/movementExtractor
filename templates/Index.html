@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <script src="https://cdn.jsdelivr.net/pyodide/v0.26.4/full/pyodide.js"></script>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+    <title>Movement Extractor</title>
+  </head>
+  <body>
+  <div class="app">
+    <header class="topbar">
+      <div class="brand">Movement Extractor</div>
+      <div class="top-actions">
+        <a class="top-btn" href="downloadGuide.html">How to export emails</a>
+      </div>
+    </header>
+
+    <main class="chat-panel">
+      <div class="chat-window" id="chatWindow" role="log" aria-live="polite">
+        <div class="message assistant centered">
+          <div class="meta">Movement Extractor</div>
+          <div>Upload a video file</div>
+        </div>
+      </div>
+
+      <div class="chat-window" id="chatWindow" role="log" aria-live="polite">
+        <div class="message assistant centered">
+          <div id="output">OUTPUT HERE!</div>
+        </div>
+      </div>
+
+      <section class="upload-card" aria-label="Upload email">
+        <div class="meta">Upload email file</div>
+        <div class="upload-row">
+            <label class="file-chooser" for="fileInput">Choose file
+              <input id="fileInput" type="file" name="file">
+            </label>
+        </div>
+        <div class="hint" style="color:var(--muted);font-size:13px">Accepted: .eml, .msg — upload exported messages for analysis.</div>
+      </section>
+    </main>
+  </div>
+
+    <div id="downloadBox" role="status" aria-live="polite"></div>
+
+  <script type="module">
+
+async function runPython(file) {
+  let pyodide = await loadPyodide();
+    let output = "";
+    pyodide.setStdout({
+      batched: (msg) => { output += msg + "\n"; }
+    });
+
+    const fileData = await file.arrayBuffer();
+    pyodide.FS.writeFile(file.name, new Uint8Array(fileData));
+
+    await pyodide.loadPackage(["numpy", "pandas"]);
+
+    await pyodide.runPythonAsync(`
+      import os
+      print(f"Accessing file: {os.path.abspath(r'${file.name}')}")
+      with open(r'${file.name}', 'rb') as f:
+          content = f.read()
+          print("File content length:", len(content))
+    `);
+
+    document.getElementById("output").textContent = output;
+  }
+
+  fileInput.addEventListener('change', async (event) => {
+    const file = event.target.files[0];
+    if (!file) return;
+
+    runPython(file)
+
+    const formData = new FormData();
+    formData.append('TODO', "send file data to server");
+
+    try {
+      const response = await fetch('/upload', {
+        method: 'POST',
+        body: formData
+      });
+
+    } catch (err) {
+      console.error('Error uploading file:', err);
+    }
+  });
+
+  </script>
+  </body>
+</html>
