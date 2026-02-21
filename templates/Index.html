@@ -30,6 +30,18 @@
         </div>
       </div>
 
+      <div class="chat-window" id="chatWindow" role="log" aria-live="polite">
+        <div class="message assistant centered">
+          <div id="output">What percent of changed pixels counts as movement?</div>
+          <div>
+            <input type="range" min="1" max="100" value="50" id="changeSlider">
+          </div>
+          <div id = "changeSliderPercent">
+
+          </div>
+        </div>
+      </div>
+
       <section class="upload-card" aria-label="Upload email">
         <div class="meta">Upload email file</div>
         <div class="upload-row">
@@ -45,6 +57,8 @@
     <div id="downloadBox" role="status" aria-live="polite"></div>
 
   <script type="module">
+    // Immediately load the starting slider bar percentage
+    document.getElementById("changeSliderPercent").innerHTML = changeSlider.value + "%";
 
 async function runPython(file) {
   let pyodide = await loadPyodide();
@@ -56,9 +70,11 @@ async function runPython(file) {
     const fileData = await file.arrayBuffer();
     pyodide.FS.writeFile(file.name, new Uint8Array(fileData));
 
-    await pyodide.loadPackage(["numpy", "pandas"]);
+    await pyodide.loadPackage(["numpy", "pandas", "opencv-python"]);
+    //await micropip.install("opencv-python")
 
     await pyodide.runPythonAsync(`
+      import cv2
       import os
       print(f"Accessing file: {os.path.abspath(r'${file.name}')}")
       with open(r'${file.name}', 'rb') as f:
@@ -66,8 +82,12 @@ async function runPython(file) {
           print("File content length:", len(content))
     `);
 
-    document.getElementById("output").textContent = output;
+    document.getElementById("output").innerHTML = '<a href= file.name download="processedFile.mp4">Download Link</a>';
   }
+
+  changeSlider.addEventListener('change', () => {
+    document.getElementById("changeSliderPercent").innerHTML = changeSlider.value + "%";
+  })
 
   fileInput.addEventListener('change', async (event) => {
     const file = event.target.files[0];
