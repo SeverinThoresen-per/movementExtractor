@@ -32,12 +32,33 @@
 
       <div class="chat-window" id="chatWindow" role="log" aria-live="polite">
         <div class="message assistant centered">
-          <div id="output">What percent of changed pixels counts as movement?</div>
+          <div id="output">Sensitivity : </div>
           <div>
-            <input type="range" min="1" max="100" value="50" id="changeSlider">
+            <input type="range" min="1" max="100" value="50" id="changeSlider" class="slider">
           </div>
           <div id = "changeSliderPercent">
+          </div>
+        </div>
+      </div>
 
+      <div class="chat-window" id="chatWindow" role="log" aria-live="polite">
+        <div class="message assistant centered">
+          <div id="output">Frame Skipping : </div>
+          <div>
+            <input type="range" min="1" max="20" value="5" id="frameSlider" class="slider">
+          </div>
+          <div id = "frameSliderCount">
+          </div>
+        </div>
+      </div>
+
+      <div class="chat-window" id="chatWindow" role="log" aria-live="polite">
+        <div class="message assistant centered">
+          <div id="output">Compression factor : </div>
+          <div>
+            <input type="range" min="1" max="100" value="50" id="compressionSlider" class="slider">
+          </div>
+          <div id = "compressionSliderPercent">
           </div>
         </div>
       </div>
@@ -57,36 +78,60 @@
     <div id="downloadBox" role="status" aria-live="polite"></div>
 
   <script type="module">
-    // Immediately load the starting slider bar percentage
-    document.getElementById("changeSliderPercent").innerHTML = changeSlider.value + "%";
+    //Immediately load the starting slider bar percentages
+    document.getElementById("changeSliderPercent").innerHTML = changeSlider.value + "% of pixels need to be different per frame";
+    document.getElementById("compressionSliderPercent").innerHTML = changeSlider.value + "% of pixels are preserved after compression";
+    document.getElementById("frameSliderCount").innerHTML = "1 frame in every : " + changeSlider.value + " is analyzed";
 
-async function runPython(file) {
-  let pyodide = await loadPyodide();
-    let output = "";
-    pyodide.setStdout({
-      batched: (msg) => { output += msg + "\n"; }
-    });
+    async function runPython(file) {
+      //starting instantiation variables
+      let pyodide = await loadPyodide();
+      let output = "";
+      
+      //Lets me catch the print statements inside the pyodide instance
+      pyodide.setStdout({
+        batched: (msg) => { output += msg + "\n"; }
+      });
 
-    const fileData = await file.arrayBuffer();
-    pyodide.FS.writeFile(file.name, new Uint8Array(fileData));
 
-    await pyodide.loadPackage(["numpy", "pandas", "opencv-python"]);
-    //await micropip.install("opencv-python")
+      const fileData = await file.arrayBuffer();
+      pyodide.FS.writeFile(file.name, new Uint8Array(fileData));
 
-    await pyodide.runPythonAsync(`
-      import cv2
-      import os
-      print(f"Accessing file: {os.path.abspath(r'${file.name}')}")
-      with open(r'${file.name}', 'rb') as f:
-          content = f.read()
-          print("File content length:", len(content))
-    `);
+      //package imports
+      await pyodide.loadPackage(["numpy", "pandas"]);
+      await pyodide.loadPackage("opencv-python");
 
-    document.getElementById("output").innerHTML = '<a href= file.name download="processedFile.mp4">Download Link</a>';
-  }
+      //python code
+      await pyodide.runPythonAsync(`
+        import cv2
+        import os
+
+        print(f"Accessing file: {os.path.abspath(r'${file.name}')}")
+        with open(r'${file.name}', 'rb') as f:
+            content = f.read()
+            print("File content length:", len(content))
+
+        # Example: just copy file as processed.mp4
+        with open(r'${file.name}', 'rb') as src:
+            with open("processed.mp4", "wb") as dst:
+                dst.write(src.read())
+      `);
+      const processedData = pyodide.FS.readFile("processed.mp4");
+      const blob = new Blob([processedData], { type: "video/mp4" });
+      const url = URL.createObjectURL(blob);
+
+      document.getElementById("output").innerHTML =
+        `<a href="${url}" download="processedFile.mp4">Download Link</a>`;
+    }
 
   changeSlider.addEventListener('change', () => {
-    document.getElementById("changeSliderPercent").innerHTML = changeSlider.value + "%";
+    document.getElementById("changeSliderPercent").innerHTML = changeSlider.value + "% of pixels need to be different per frame";
+  })
+  compressionSlider.addEventListener('change', () => {
+    document.getElementById("compressionSliderPercent").innerHTML = changeSlider.value + "% of pixels are preserved after compression";
+  })
+  frameSlider.addEventListener('change', () => {
+    document.getElementById("frameSliderCount").innerHTML = "1 frame in every : " + changeSlider.value + " is analyzed";
   })
 
   fileInput.addEventListener('change', async (event) => {

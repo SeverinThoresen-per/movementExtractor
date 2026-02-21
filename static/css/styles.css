@@ -14,7 +14,7 @@
   box-sizing: border-box;
 }
 
-#changeSlider {
+.slider {
   width: 100%;
 }
 
@@ -112,7 +112,7 @@ body {
 }
 
 .message.centered {
-  margin: 6px auto;
+  margin: auto;
   max-width: 760px;
   text-align: center;
 }
