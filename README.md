@@ -19,7 +19,8 @@ Video Processing Tasks :
  - identify "boxes" of changed pixels
  - draw up arrays of movement vectors for those boxes
 
-Pong Tasks : 
-
+Pong Tasks, Deadline : Febrary 25th: 
+ - Learn to manage python lists (important, that's what input I'm giving to you)
+ - Learn to create your own python classes
  - use the arrays of movement vectors to create an algorithm for a 
    heatmap and other movement analytics
