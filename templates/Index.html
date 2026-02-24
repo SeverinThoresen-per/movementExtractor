@@ -79,11 +79,11 @@
 
   <script type="module">
     //Immediately load the starting slider bar percentages
-    document.getElementById("changeSliderPercent").innerHTML = changeSlider.value + "% of pixels need to be different per frame";
-    document.getElementById("compressionSliderPercent").innerHTML = changeSlider.value + "% of pixels are preserved after compression";
-    document.getElementById("frameSliderCount").innerHTML = "1 frame in every : " + changeSlider.value + " is analyzed";
+    document.getElementById("changeSliderPercent").innerHTML = changeSlider.value + "% of pixels need to be different per frame to be considered movement";
+    document.getElementById("compressionSliderPercent").innerHTML = compressionSlider.value + "% of pixels are preserved after compression";
+    document.getElementById("frameSliderCount").innerHTML = "1 frame in every " + frameSlider.value + " is analyzed";
 
-    async function runPython(file) {
+    async function runPython(file, change, compression, frame) {
       //starting instantiation variables
       let pyodide = await loadPyodide();
       let output = "";
@@ -101,20 +101,42 @@
       await pyodide.loadPackage(["numpy", "pandas"]);
       await pyodide.loadPackage("opencv-python");
 
+      //passing in file stuff to the pyodide instance, much easier than constantly reading and writing local files.
+      pyodide.globals.set("fileName", file.name);
+
       //python code
       await pyodide.runPythonAsync(`
         import cv2
-        import os
 
-        print(f"Accessing file: {os.path.abspath(r'${file.name}')}")
-        with open(r'${file.name}', 'rb') as f:
-            content = f.read()
-            print("File content length:", len(content))
+        video = cv2.VideoCapture(fileName)
 
-        # Example: just copy file as processed.mp4
-        with open(r'${file.name}', 'rb') as src:
-            with open("processed.mp4", "wb") as dst:
-                dst.write(src.read())
+        #Original video properties
+        fps = video.get(cv2.CAP_PROP_FPS)
+        width = int(video.get(cv2.CAP_PROP_FRAME_WIDTH))
+        height = int(video.get(cv2.CAP_PROP_FRAME_HEIGHT))
+
+        #Video writer
+        out = cv2.VideoWriter(
+            "processed.mp4",
+            cv2.VideoWriter_fourcc(*'mp4v'),
+            fps,
+            (width, height),
+            isColor=False
+        )
+
+        #Grayscale's the video so I only need 1 color channel
+        while True:
+            ret, frame = video.read()
+            if not ret:
+                break
+
+            gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+            out.write(gray)
+
+        out.release()
+        video.release()
+
+        print("Processing complete")
       `);
       const processedData = pyodide.FS.readFile("processed.mp4");
       const blob = new Blob([processedData], { type: "video/mp4" });
@@ -125,20 +147,20 @@
     }
 
   changeSlider.addEventListener('change', () => {
-    document.getElementById("changeSliderPercent").innerHTML = changeSlider.value + "% of pixels need to be different per frame";
+    document.getElementById("changeSliderPercent").innerHTML = changeSlider.value + "% of pixels need to be different per frame to be considered movement";
   })
   compressionSlider.addEventListener('change', () => {
-    document.getElementById("compressionSliderPercent").innerHTML = changeSlider.value + "% of pixels are preserved after compression";
+    document.getElementById("compressionSliderPercent").innerHTML = compressionSlider.value + "% of pixels are preserved after compression";
   })
   frameSlider.addEventListener('change', () => {
-    document.getElementById("frameSliderCount").innerHTML = "1 frame in every : " + changeSlider.value + " is analyzed";
+    document.getElementById("frameSliderCount").innerHTML = "1 frame in every " + frameSlider.value + " is analyzed";
   })
 
   fileInput.addEventListener('change', async (event) => {
     const file = event.target.files[0];
     if (!file) return;
 
-    runPython(file)
+    runPython(file, changeSlider.value, compressionSlider.value, frameSlider.value)
 
     const formData = new FormData();
     formData.append('TODO', "send file data to server");
