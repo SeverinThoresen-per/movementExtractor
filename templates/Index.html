@@ -101,8 +101,11 @@
       await pyodide.loadPackage(["numpy", "pandas"]);
       await pyodide.loadPackage("opencv-python");
 
-      //passing in file stuff to the pyodide instance, much easier than constantly reading and writing local files.
+      //passing in global variables to the pyodide instance
       pyodide.globals.set("fileName", file.name);
+      pyodide.globals.set("change", change);
+      pyodide.globals.set("compression", compression);
+      pyodide.globals.set("frame", frame);
 
       //python code
       await pyodide.runPythonAsync(`
