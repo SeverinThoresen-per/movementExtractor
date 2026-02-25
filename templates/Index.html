@@ -117,13 +117,14 @@
         fps = video.get(cv2.CAP_PROP_FPS)
         width = int(video.get(cv2.CAP_PROP_FRAME_WIDTH))
         height = int(video.get(cv2.CAP_PROP_FRAME_HEIGHT))
+        compressionPercent = int(compression) / 100;
 
         #Video writer
         out = cv2.VideoWriter(
             "processed.mp4",
             cv2.VideoWriter_fourcc(*'mp4v'),
             fps,
-            (width, height),
+            (int(width * compressionPercent), int(height * compressionPercent)),
             isColor=False
         )
 
