@@ -113,29 +113,39 @@
 
         video = cv2.VideoCapture(fileName)
 
-        #Original video properties
         fps = video.get(cv2.CAP_PROP_FPS)
         width = int(video.get(cv2.CAP_PROP_FRAME_WIDTH))
         height = int(video.get(cv2.CAP_PROP_FRAME_HEIGHT))
-        compressionPercent = int(compression) / 100;
 
-        #Video writer
+        new_width = int(width * int(compression) / 100)
+        new_height = int(height * int(compression) / 100)
+
         out = cv2.VideoWriter(
             "processed.mp4",
             cv2.VideoWriter_fourcc(*'mp4v'),
             fps,
-            (int(width * compressionPercent), int(height * compressionPercent)),
-            isColor=False
+            (new_width, new_height),
+            isColor=True
         )
 
-        #Grayscale's the video so I only need 1 color channel
+        frame_count = 0
+        skip = int(frame)
+
         while True:
-            ret, frame = video.read()
+            ret, frame_data = video.read()
             if not ret:
                 break
 
-            gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
-            out.write(gray)
+            frame_count += 1
+
+            if frame_count % skip != 0:
+                continue
+
+            gray = cv2.cvtColor(frame_data, cv2.COLOR_BGR2GRAY)
+            gray_bgr = cv2.cvtColor(gray, cv2.COLOR_GRAY2BGR)
+
+            resized = cv2.resize(gray_bgr, (new_width, new_height))
+            out.write(resized)
 
         out.release()
         video.release()
