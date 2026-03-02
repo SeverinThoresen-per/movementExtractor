@@ -16,6 +16,8 @@
       </div>
     </header>
 
+    <!-- The topmost panel -->
+
     <main class="chat-panel">
       <div class="chat-window" id="chatWindow" role="log" aria-live="polite">
         <div class="message assistant centered">
@@ -24,11 +26,15 @@
         </div>
       </div>
 
+      <!-- The panel where the processed video can be downloaded from -->
+
       <div class="chat-window" id="chatWindow" role="log" aria-live="polite">
         <div class="message assistant centered">
           <div id="output">OUTPUT HERE!</div>
         </div>
       </div>
+
+      <!-- The panel containing the slider for the percent of change that qualifies as movement -->
 
       <div class="chat-window" id="chatWindow" role="log" aria-live="polite">
         <div class="message assistant centered">
@@ -41,6 +47,8 @@
         </div>
       </div>
 
+      <!-- The panel containing the slider for the amount of frames to skip for efficiency -->
+
       <div class="chat-window" id="chatWindow" role="log" aria-live="polite">
         <div class="message assistant centered">
           <div id="output">Frame Skipping : </div>
@@ -52,6 +60,8 @@
         </div>
       </div>
 
+      <!-- The panel containing the slider for the amount of compression -->
+
       <div class="chat-window" id="chatWindow" role="log" aria-live="polite">
         <div class="message assistant centered">
           <div id="output">Compression factor : </div>
@@ -62,6 +72,8 @@
           </div>
         </div>
       </div>
+
+      <!-- The panel at the bottom which accepts file input -->
 
       <section class="upload-card" aria-label="Upload email">
         <div class="meta">Upload email file</div>
@@ -93,7 +105,7 @@
         batched: (msg) => { output += msg + "\n"; }
       });
 
-
+      // this is the code that actually transfers the file into the pyodide instance
       const fileData = await file.arrayBuffer();
       pyodide.FS.writeFile(file.name, new Uint8Array(fileData));
 
@@ -159,7 +171,8 @@
       document.getElementById("output").innerHTML =
         `<a href="${url}" download="processedFile.mp4">Download Link</a>`;
     }
-
+  
+  // These handle the labels under the slider bars to display the value the slider bar is set to
   changeSlider.addEventListener('change', () => {
     document.getElementById("changeSliderPercent").innerHTML = changeSlider.value + "% of pixels need to be different per frame to be considered movement";
   })
@@ -170,6 +183,7 @@
     document.getElementById("frameSliderCount").innerHTML = "1 frame in every " + frameSlider.value + " is analyzed";
   })
 
+  // The event listener that detects file uploads, also triggers the pyodide python script
   fileInput.addEventListener('change', async (event) => {
     const file = event.target.files[0];
     if (!file) return;
