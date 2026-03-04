@@ -154,16 +154,17 @@
                 continue
 
             gray = cv2.cvtColor(frame_data, cv2.COLOR_BGR2GRAY)
-            gray_bgr = cv2.cvtColor(gray, cv2.COLOR_GRAY2BGR)
+            gray_rgb = cv2.cvtColor(gray, cv2.COLOR_GRAY2BGR)
+            print(gray_rgb[100, 100])
 
-            resized = cv2.resize(gray_bgr, (new_width, new_height))
+            resized = cv2.resize(gray_rgb, (new_width, new_height))
             out.write(resized)
 
+        print("Processing complete")
         out.release()
         video.release()
-
-        print("Processing complete")
       `);
+      console.log(output);
       const processedData = pyodide.FS.readFile("processed.mp4");
       const blob = new Blob([processedData], { type: "video/mp4" });
       const url = URL.createObjectURL(blob);
